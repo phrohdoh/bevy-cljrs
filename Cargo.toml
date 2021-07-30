@@ -1,0 +1,12 @@
+[package]
+name = "bevy_cljrs"
+version = "0.0.0"
+edition = "2018"
+
+[dependencies]
+bevy = { version = "0.5", features = ["dynamic"] }
+[dependencies.cljrs]
+# path = "../cljrs"
+git = "https://github.com/phrohdoh/cljrs"
+branch = "lib+bin"
+package = "rust_clojure"
