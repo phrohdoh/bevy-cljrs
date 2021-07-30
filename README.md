@@ -1,6 +1,57 @@
 # [bevy] + [cljrs]
 
-<details><summary>State as of 25/July/2021</summary>
+<details><summary>State as of 30/July/2021</summary>
+
+```shell
+cargo run
+```
+```
+(heart ,,,) args: [
+    PersistentVector(
+        PersistentVector {
+            vals: [
+                Keyword(
+                    Keyword {
+                        sym: Symbol {
+                            name: "in",
+                            ns: None,
+                            meta: Empty,
+                        },
+                    },
+                ),
+                Keyword(
+                    Keyword {
+                        sym: Symbol {
+                            name: "bevy",
+                            ns: None,
+                            meta: Empty,
+                        },
+                    },
+                ),
+                Keyword(
+                    Keyword {
+                        sym: Symbol {
+                            name: "ecs",
+                            ns: None,
+                            meta: Empty,
+                        },
+                    },
+                ),
+            ],
+        },
+    ),
+]
+Clojure string from Rust-implemented, exposed-to-Clojure function
+#Condition["Tried to read empty stream; unexpected EOF"]
+[2.873645364s] unit is selected: #player-id,0 #unit-type-id,0
+[2.873645364s] unit is selected: #player-id,1 #unit-type-id,1
+[4.872769126s] unit is selected: #player-id,0 #unit-type-id,0
+[4.872769126s] unit is selected: #player-id,1 #unit-type-id,1
+```
+
+</details>
+
+<details><summary>State as of 25/July/2021 (not in git history)</summary>
 
 ```shell
 cargo build
