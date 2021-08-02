@@ -1,0 +1,6 @@
+{
+  "folders": [ // relative to *this file*
+    { "path": ".." },
+    { "path": "../../cljrs" },
+  ],
+}

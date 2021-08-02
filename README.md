@@ -1,257 +1,29 @@
-# [bevy] + [cljrs]
+# prototype of a [Bevy] app with a [Clojure] scripting environment
 
-<details><summary>State as of 30/July/2021</summary>
+Clojure scripting environment provided by the [cljrs] project's _interpreter_.
 
-```shell
+<small>_cljrs_ is a fork of [ClojureRS]</small>
+
+---
+
+## building and running from source code via [`cargo`]
+
+on the command line in the directory containing *this file*:
+
+```
 cargo run
 ```
+
+### to access a REPL post-`some-user-script.clj` load, pre-`(user/on-startup)`:
+
 ```
-(heart ,,,) args: [
-    PersistentVector(
-        PersistentVector {
-            vals: [
-                Keyword(
-                    Keyword {
-                        sym: Symbol {
-                            name: "in",
-                            ns: None,
-                            meta: Empty,
-                        },
-                    },
-                ),
-                Keyword(
-                    Keyword {
-                        sym: Symbol {
-                            name: "bevy",
-                            ns: None,
-                            meta: Empty,
-                        },
-                    },
-                ),
-                Keyword(
-                    Keyword {
-                        sym: Symbol {
-                            name: "ecs",
-                            ns: None,
-                            meta: Empty,
-                        },
-                    },
-                ),
-            ],
-        },
-    ),
-]
-Clojure string from Rust-implemented, exposed-to-Clojure function
-#Condition["Tried to read empty stream; unexpected EOF"]
-[2.873645364s] unit is selected: #player-id,0 #unit-type-id,0
-[2.873645364s] unit is selected: #player-id,1 #unit-type-id,1
-[4.872769126s] unit is selected: #player-id,0 #unit-type-id,0
-[4.872769126s] unit is selected: #player-id,1 #unit-type-id,1
+cargo run -- --with-startup-repl
 ```
 
-</details>
+(at the Clojure REPL you can enter `:repl/quit` to end that REPL session)
 
-<details><summary>State as of 25/July/2021 (not in git history)</summary>
-
-```shell
-cargo build
-```
-```
-   Compiling bevy_cljrs v0.0.0
-error[E0277]: `RefCell<HashMap<rust_clojure::symbol::Symbol, Arc<rust_clojure::value::Value>>>` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `RefCell<HashMap<rust_clojure::symbol::Symbol, Arc<rust_clojure::value::Value>>>` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: within `Environment`, the trait `Sync` is not implemented for `RefCell<HashMap<rust_clojure::symbol::Symbol, Arc<rust_clojure::value::Value>>>`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `RefCell<rust_clojure::symbol::Symbol>` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `RefCell<rust_clojure::symbol::Symbol>` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: within `Environment`, the trait `Sync` is not implemented for `RefCell<rust_clojure::symbol::Symbol>`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `RefCell<HashMap<rust_clojure::symbol::Symbol, Namespace>>` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `RefCell<HashMap<rust_clojure::symbol::Symbol, Namespace>>` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: within `Environment`, the trait `Sync` is not implemented for `RefCell<HashMap<rust_clojure::symbol::Symbol, Namespace>>`
-  = note: required because it appears within the type `Namespaces`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `RefCell<rust_clojure::protocols::IPersistentMap>` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `RefCell<rust_clojure::protocols::IPersistentMap>` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: within `rust_clojure::value::Value`, the trait `Sync` is not implemented for `RefCell<rust_clojure::protocols::IPersistentMap>`
-  = note: required because it appears within the type `rust_clojure::var::Var`
-  = note: required because it appears within the type `rust_clojure::value::Value`
-  = note: required because of the requirements on the impl of `Send` for `Arc<rust_clojure::value::Value>`
-  = note: required because it appears within the type `MapEntry`
-  = note: required because it appears within the type `rust_clojure::persistent_list_map::PersistentListMap`
-  = note: required because it appears within the type `rust_clojure::symbol::Symbol`
-  = note: required because of the requirements on the impl of `Send` for `RefCell<rust_clojure::symbol::Symbol>`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `RefCell<Arc<rust_clojure::value::Value>>` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `RefCell<Arc<rust_clojure::value::Value>>` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: within `rust_clojure::value::Value`, the trait `Sync` is not implemented for `RefCell<Arc<rust_clojure::value::Value>>`
-  = note: required because it appears within the type `rust_clojure::var::Var`
-  = note: required because it appears within the type `rust_clojure::value::Value`
-  = note: required because of the requirements on the impl of `Send` for `Arc<rust_clojure::value::Value>`
-  = note: required because it appears within the type `MapEntry`
-  = note: required because it appears within the type `rust_clojure::persistent_list_map::PersistentListMap`
-  = note: required because it appears within the type `rust_clojure::symbol::Symbol`
-  = note: required because of the requirements on the impl of `Send` for `RefCell<rust_clojure::symbol::Symbol>`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `(dyn rust_clojure::ifn::IFn + 'static)` cannot be shared between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `(dyn rust_clojure::ifn::IFn + 'static)` cannot be shared between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: the trait `Sync` is not implemented for `(dyn rust_clojure::ifn::IFn + 'static)`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<(dyn rust_clojure::ifn::IFn + 'static)>`
-  = note: required because it appears within the type `rust_clojure::value::Value`
-  = note: required because of the requirements on the impl of `Send` for `Arc<rust_clojure::value::Value>`
-  = note: required because it appears within the type `MapEntry`
-  = note: required because it appears within the type `rust_clojure::persistent_list_map::PersistentListMap`
-  = note: required because it appears within the type `rust_clojure::symbol::Symbol`
-  = note: required because of the requirements on the impl of `Send` for `RefCell<rust_clojure::symbol::Symbol>`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-error[E0277]: `(dyn rust_clojure::ifn::IFn + 'static)` cannot be sent between threads safely
- --> src/lib.rs:8:6
-  |
-8 | impl Plugin for ScriptViaClojurePlugin {
-  |      ^^^^^^ `(dyn rust_clojure::ifn::IFn + 'static)` cannot be sent between threads safely
-  | 
- ::: ~/.cargo/registry/src/github.com-1ecc6299db9ec823/bevy_app-0.5.0/src/plugin.rs:8:32
-  |
-8 | pub trait Plugin: Any + Send + Sync {
-  |                                ---- required by this bound in `bevy::prelude::Plugin`
-  |
-  = help: the trait `Send` is not implemented for `(dyn rust_clojure::ifn::IFn + 'static)`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<(dyn rust_clojure::ifn::IFn + 'static)>`
-  = note: required because it appears within the type `rust_clojure::value::Value`
-  = note: required because of the requirements on the impl of `Send` for `Arc<rust_clojure::value::Value>`
-  = note: required because it appears within the type `MapEntry`
-  = note: required because it appears within the type `rust_clojure::persistent_list_map::PersistentListMap`
-  = note: required because it appears within the type `rust_clojure::symbol::Symbol`
-  = note: required because of the requirements on the impl of `Send` for `RefCell<rust_clojure::symbol::Symbol>`
-  = note: required because it appears within the type `EnvironmentVal`
-  = note: required because it appears within the type `Environment`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Environment>`
-  = note: required because it appears within the type `Repl`
-  = note: required because of the requirements on the impl of `Sync` for `Arc<Repl>`
-note: required because it appears within the type `ScriptViaClojurePlugin`
- --> src/lib.rs:7:12
-  |
-7 | pub struct ScriptViaClojurePlugin { repl: CljRepl }
-  |            ^^^^^^^^^^^^^^^^^^^^^^
-
-For more information about this error, try `rustc --explain E0277`.
-error: could not compile `bevy_cljrs` due to 7 previous errors
-```
-
-</details>
-
-[bevy]: https://bevyengine.org
+[Bevy]: https://bevyengine.org
+[Clojure]: https://clojure.org
 [cljrs]: https://github.com/phrohdoh/cljrs
+[ClojureRS]: https://github.com/clojure-rs/ClojureRS
+[`cargo`]: https://doc.rust-lang.org/cargo

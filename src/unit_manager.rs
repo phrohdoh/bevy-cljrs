@@ -4,9 +4,14 @@ pub struct UnitManagerPlugin;
 impl Plugin for UnitManagerPlugin {
     fn build(&self, app: &mut AppBuilder) {
         app
-           .insert_resource(ListSelectedUnitsTimer(Timer::from_seconds(2.0, true)))
-           .add_startup_system(prepopulate_with_units.system())
-           .add_system(list_selected_units.system());
+           .insert_resource(ListUnitSelectionTimer({
+               let mut t = Timer::from_seconds(3.0, true);
+               t.pause();
+               t
+            }))
+           .add_startup_system(sys_startup.system())
+           .add_system(list_unit_selection_state.system())
+           ;
     }
 }
 
@@ -37,40 +42,87 @@ impl UnitComponent {
     }
 }
 macro_rules! unit {
-    (player_id: $pid:expr, unit_type_id: $uid:expr) => {
-        crate::UnitComponent::new($pid, $uid)
-    };
+    ($pid:expr, $uid:expr) => {{
+        $crate::unit_manager::UnitComponent::new($pid, $uid)
+    }};
 }
 
-pub struct SelectedUnitComponent;
-
-enum UnitSelectedState {
+#[derive(Debug, Clone, PartialEq)]
+pub enum SelectableState {
     Selected,
     NotSelected,
 }
-fn add_unit(c: &mut Commands, u: UnitComponent, selected: UnitSelectedState) {
-    let mut ent = c.spawn();
-    ent.insert(u);
-    if let UnitSelectedState::Selected = selected {
-        ent.insert(SelectedUnitComponent);
-    }
+#[derive(Debug, Clone)]
+pub struct SelectableComponent {
+    pub is: SelectableState,
 }
 
-pub fn prepopulate_with_units(mut c: Commands) {
-    add_unit(&mut c, unit!(player_id: PlayerId(0), unit_type_id: UnitTypeId(0)), UnitSelectedState::Selected);
-    add_unit(&mut c, unit!(player_id: PlayerId(0), unit_type_id: UnitTypeId(0)), UnitSelectedState::NotSelected);
-    add_unit(&mut c, unit!(player_id: PlayerId(1), unit_type_id: UnitTypeId(1)), UnitSelectedState::Selected);
+fn sys_startup(
+    cmds: Commands,
+    mut list_unit_selection_timer: ResMut<ListUnitSelectionTimer>,
+) {
+    populate_with_units(cmds);
+    list_unit_selection_timer.0.unpause();
 }
-pub struct ListSelectedUnitsTimer(Timer);
-pub fn list_selected_units(
+
+fn add_unit(
+    cmds: &mut Commands,
+    unit: UnitComponent,
+    selectable: SelectableState,
+) {
+    let mut ent = cmds.spawn();
+    ent.insert(unit);
+    ent.insert(SelectableComponent { is: selectable });
+}
+
+fn populate_with_units(mut cmds: Commands) {
+    add_unit(&mut cmds,
+        unit!(PlayerId(1), UnitTypeId(1)),
+        SelectableState::NotSelected);
+    add_unit(&mut cmds,
+        unit!(PlayerId(1), UnitTypeId(1)),
+        SelectableState::NotSelected);
+    //
+    add_unit(&mut cmds,
+        unit!(PlayerId(1), UnitTypeId(2)),
+        SelectableState::NotSelected);
+    add_unit(&mut cmds,
+        unit!(PlayerId(1), UnitTypeId(2)),
+        SelectableState::Selected);
+    //
+    add_unit(&mut cmds,
+        unit!(PlayerId(2), UnitTypeId(1)),
+        SelectableState::Selected);
+    add_unit(&mut cmds,
+        unit!(PlayerId(2), UnitTypeId(1)),
+        SelectableState::Selected);
+    //
+    add_unit(&mut cmds,
+        unit!(PlayerId(2), UnitTypeId(2)),
+        SelectableState::Selected);
+    add_unit(&mut cmds,
+        unit!(PlayerId(2), UnitTypeId(2)),
+        SelectableState::NotSelected);
+}
+
+pub(crate) struct ListUnitSelectionTimer(pub Timer);
+fn list_unit_selection_state(
     time: Res<Time>,
-    mut timer: ResMut<ListSelectedUnitsTimer>,
-    query: Query<&UnitComponent, With<SelectedUnitComponent>>,
+    mut timer: ResMut<ListUnitSelectionTimer>,
+    q_selectable_units: Query<(Entity, &SelectableComponent), With<UnitComponent>>,
 ) {
     let when = time.time_since_startup();
+    let rs_dbg_curr_file = file!();
+
     if timer.0.tick(time.delta()).just_finished() {
-        for unit_comp in query.iter() {
-            println!("[{:?}] unit is selected: {} {}", when, unit_comp.player_id, unit_comp.unit_type_id);
+        for (ent, selectable) in q_selectable_units.iter() {
+            println!(
+                "[{when:?} {where}] {ent:?} is {not_}selected",
+                when = when,
+                where = rs_dbg_curr_file,
+                ent = ent,
+                not_ = if selectable.is == SelectableState::Selected { "not " } else { "" },
+            );
         }
     }
 }

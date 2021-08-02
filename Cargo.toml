@@ -8,5 +8,5 @@ bevy = { version = "0.5", features = ["dynamic"] }
 [dependencies.cljrs]
 # path = "../cljrs"
 git = "https://github.com/phrohdoh/cljrs"
-branch = "lib+bin"
+branch = "main"
 package = "rust_clojure"
