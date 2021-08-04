@@ -66,16 +66,7 @@ fn sys_set_unit_visibility_based_on_selection_status_on_timer(
 
     if timer.0.tick(time.delta()).just_finished() {
         for (ent, selectable, mut visible) in q.iter_mut() {
-            print!("{:?} vis={},sel={} -> vis=", ent, visible.is_visible, selectable.is_selected);
             visible.is_visible = selectable.is_selected;
-            println!("{}", visible.is_visible);
-            //println!(
-            //    "[{when:?} {where}] {ent:?} is {not_}selected",
-            //    when = when,
-            //    where = rs_dbg_curr_file,
-            //    ent = ent,
-            //    not_ = if !selectable.is_selected { "not " } else { "" },
-            //);
         }
     }
 }
