@@ -1,3 +1,6 @@
+// imports /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 use std::rc::Rc;
 use bevy::prelude::*;
 use cljrs::{
@@ -12,29 +15,27 @@ use cljrs::{
     symbol::Symbol,
     value::{Value, ToValue},
 };
-use crate::unit_manager::{
+
+use crate::units::{
     SelectableComponent,
-    SelectableState,
     UnitComponent,
 };
 
+// macros (must be defined before usage) ///////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 macro_rules! sym {
-    (@ns $ns:expr,$n:expr) => { ::cljrs::symbol::Symbol::intern_with_ns($ns,$n) };
-    (@ns @val $ns:expr,$n:expr) => { sym!($ns,$n).to_value() };
-    (@ns @rc-val $ns:expr,$n:expr) => { sym!($ns,$n).to_rc_value() };
+    (@ns $ns:expr,$n:expr) => {::cljrs::symbol::Symbol::intern_with_ns($ns,$n)};
+    (@ns @val $ns:expr,$n:expr) => {sym!($ns,$n).to_value()};
+    (@ns @rc-val $ns:expr,$n:expr) => {sym!($ns,$n).to_rc_value()};
     //
-    ($n:expr) => { ::cljrs::symbol::Symbol::intern($n) };
-    (@val $n:expr) => { sym!($n).to_value() };
-    (@rc-val $n:expr) => { sym!($n).to_rc_value() };
+    ($n:expr) => {::cljrs::symbol::Symbol::intern($n)};
+    (@val $n:expr) => {sym!($n).to_value()};
+    (@rc-val $n:expr) => {sym!($n).to_rc_value()};
 }
 
-pub(crate) struct ScriptingConfig {
-    pub startup_repl: bool,
-}
-
-#[derive(Debug)]
-pub(crate) struct StartupRepl(bool);
-
+// plugins / add to bevy app ///////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 pub(crate) trait ScriptableApp {
     fn add_scripting(
@@ -65,6 +66,23 @@ impl ScriptableApp for AppBuilder {
         self
     }
 }
+
+// resources ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+#[derive(Debug)]
+pub(crate) struct ScriptingConfig {
+    pub startup_repl: bool,
+}
+
+#[derive(Debug)]
+pub(crate) struct StartupRepl(bool);
+
+#[derive(Debug)]
+pub(crate) struct ToggleUnitSelectionTimer(pub Timer);
+
+// systems /////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
 fn sys_startup(
     rc_env: NonSend<Rc<Env>>,
@@ -108,55 +126,10 @@ fn sys_startup(
     toggle_unit_selection_timer.0.unpause();
 }
 
-/// load: exhaustively sequentially read and eval
-fn _load_file(
-    f: &LoadFileFn,
-    file_path: String,
-) -> Value {
-    <LoadFileFn as IFn>::invoke(&f, vec![
-        Value::String(file_path).to_rc_value(),
-    ])
-}
-
-fn _invoke_clj_sym_as_fn(
-    repl_provider: Box<dyn FnOnce(Rc<Env>) -> Repl>,
-    rc_env: Rc<Env>,
-    fn_sym: Symbol,
-    arg_vals: Vec<Value>,
-) -> (Value/* eval ret */, Value/* eval'd clj list */) {
-    let repl = repl_provider(rc_env);
-    let list_val = _as_clj_list_val(fn_sym, arg_vals);
-    (repl.eval(&list_val), list_val)
-}
-
-fn _as_clj_list_val(
-    fn_sym: Symbol,
-    arg_vals: Vec<Value>,
-) -> Value {
-    _as_clj_list(fn_sym, arg_vals).to_value()
-}
-
-fn _as_clj_list(
-    fn_sym: Symbol,
-    arg_vals: Vec<Value>,
-) -> PersistentList {
-    let mut vals_to_make_list_from = vec![fn_sym.to_value()];
-    vals_to_make_list_from.extend(arg_vals.into_iter());
-
-    let prepend = |plst, val| cljrs::persistent_list::cons(val, plst);
-    let list = vals_to_make_list_from.into_iter()
-        .rfold(PersistentList::Empty, prepend);
-
-    list
-}
-
-pub(crate) struct ToggleUnitSelectionTimer(pub Timer);
 fn sys_toggle_unit_selection_on_timer(
     time: Res<Time>,
     mut timer: ResMut<ToggleUnitSelectionTimer>,
-    //
     mut query: Query<(Entity, &UnitComponent, &mut SelectableComponent)>,
-    //
     rc_env: NonSend<Rc<Env>>,
 ) {
     if !timer.0.tick(time.delta()).just_finished() {
@@ -203,16 +176,54 @@ fn sys_toggle_unit_selection_on_timer(
         );
 
         if let Value::Boolean(true) = should_toggle_selection {
-            fn invert(s: SelectableState) -> SelectableState {
-                match s {
-                    SelectableState::Selected => SelectableState::NotSelected,
-                    SelectableState::NotSelected => SelectableState::Selected,
-                }
-            }
-            selectable.is = invert(selectable.is.clone());
+            selectable.is_selected = !selectable.is_selected;
         }
-
     }
+}
+
+// unorganized /////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+/// load: exhaustively sequentially read and eval
+fn _load_file(
+    f: &LoadFileFn,
+    file_path: String,
+) -> Value {
+    <LoadFileFn as IFn>::invoke(&f, vec![
+        Value::String(file_path).to_rc_value(),
+    ])
+}
+
+fn _invoke_clj_sym_as_fn(
+    repl_provider: Box<dyn FnOnce(Rc<Env>) -> Repl>,
+    rc_env: Rc<Env>,
+    fn_sym: Symbol,
+    arg_vals: Vec<Value>,
+) -> (Value/* eval ret */, Value/* eval'd clj list */) {
+    let repl = repl_provider(rc_env);
+    let list_val = _as_clj_list_val(fn_sym, arg_vals);
+    (repl.eval(&list_val), list_val)
+}
+
+fn _as_clj_list_val(
+    fn_sym: Symbol,
+    arg_vals: Vec<Value>,
+) -> Value {
+    _as_clj_list(fn_sym, arg_vals).to_value()
+}
+
+fn _as_clj_list(
+    fn_sym: Symbol,
+    arg_vals: Vec<Value>,
+) -> PersistentList {
+    let mut vals_to_make_list_from = vec![fn_sym.to_value()];
+    vals_to_make_list_from.extend(arg_vals.into_iter());
+
+    let prepend = |plst, val| cljrs::persistent_list::cons(val, plst);
+    let list = vals_to_make_list_from.into_iter()
+        .rfold(PersistentList::Empty, prepend);
+
+    list
 }
 
 pub(crate) fn create_custom_cljrs_env() -> Rc<Env> {
