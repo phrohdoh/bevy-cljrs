@@ -57,7 +57,7 @@ impl ScriptableApp for AppBuilder {
            ;
         self
            .insert_resource(ToggleUnitSelectionTimer({
-               let mut t = Timer::from_seconds(5.0, true);
+               let mut t = Timer::from_seconds(1.0, true);
                t.pause();
                t
             }))
@@ -160,19 +160,11 @@ fn sys_toggle_unit_selection_on_timer(
             ),
         ];
 
-        let (should_toggle_selection, clj_dbg_lst) = _invoke_clj_sym_as_fn(
+        let should_toggle_selection = _invoke_clj_sym_as_fn(
             Box::new(Repl::new),
             rc_env.clone(),
             sym!(@ns "user", "toggle-selection?"),
             args,
-        ); let rs_dbg_curr_line = line!();
-        eprintln!(
-            "[{when:?} {where} {ent:?}] {lst} ;=> {ret}",
-            when = when,
-            where = format!("{}:{}", rs_dbg_curr_file, rs_dbg_curr_line),
-            ent = ent,
-            lst = clj_dbg_lst,
-            ret = should_toggle_selection,
         );
 
         if let Value::Boolean(true) = should_toggle_selection {
@@ -189,7 +181,7 @@ fn _load_file(
     f: &LoadFileFn,
     file_path: String,
 ) -> Value {
-    <LoadFileFn as IFn>::invoke(&f, vec![
+    <LoadFileFn as IFn>::invoke(f, vec![
         Value::String(file_path).to_rc_value(),
     ])
 }
@@ -199,10 +191,10 @@ fn _invoke_clj_sym_as_fn(
     rc_env: Rc<Env>,
     fn_sym: Symbol,
     arg_vals: Vec<Value>,
-) -> (Value/* eval ret */, Value/* eval'd clj list */) {
-    let repl = repl_provider(rc_env);
+) -> Value {
     let list_val = _as_clj_list_val(fn_sym, arg_vals);
-    (repl.eval(&list_val), list_val)
+    let repl = repl_provider(rc_env);
+    repl.eval(&list_val)
 }
 
 fn _as_clj_list_val(
