@@ -1,7 +1,7 @@
 // imports /////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 use bevy::prelude::*;
 use cljrs::{
     environment::Environment as Env,
@@ -40,18 +40,18 @@ macro_rules! sym {
 pub(crate) trait ScriptableApp {
     fn add_scripting(
         &mut self,
-        env: Rc<Env>,
+        env: Arc<Env>,
         cfg: ScriptingConfig,
     ) -> &mut Self;
 }
 impl ScriptableApp for AppBuilder {
     fn add_scripting(
         &mut self,
-        env: Rc<Env>,
+        env: Arc<Env>,
         cfg: ScriptingConfig,
     ) -> &mut Self {
         self
-           .insert_non_send_resource(env)
+           .insert_resource(env)
            .insert_resource(StartupRepl(cfg.startup_repl))
            .add_startup_system(sys_startup.system())
            ;
@@ -85,15 +85,14 @@ pub(crate) struct ToggleUnitSelectionTimer(pub Timer);
 ////////////////////////////////////////////////////////////////////////////////
 
 fn sys_startup(
-    rc_env: NonSend<Rc<Env>>,
+    arc_env: Res<Arc<Env>>,
     startup_repl: Res<StartupRepl>,
     mut toggle_unit_selection_timer: ResMut<ToggleUnitSelectionTimer>,
 ) {
-    let load_file_fn = LoadFileFn::new(rc_env.clone());
+    let load_file_fn = LoadFileFn::new(arc_env.clone());
 
-    let env = rc_env.as_ref();
     let user_ns = sym!("user");
-    env.change_or_create_namespace(&user_ns);
+    arc_env.change_or_create_namespace(&user_ns);
 
     _load_file(&load_file_fn, format!(
        "{cargo_manifest_dir}/src/scripts/{file_stem}.clj",
@@ -102,7 +101,7 @@ fn sys_startup(
     ));
 
     if startup_repl.0 {
-        let repl = Repl::new(rc_env.clone());
+        let repl = Repl::new(arc_env.clone());
         let i = std::io::stdin();
         let i = i.lock();
         let o = std::io::stdout();
@@ -114,11 +113,11 @@ fn sys_startup(
         repl.run(i, o);
     }
 
-    env.change_or_create_namespace(&user_ns);
+    arc_env.change_or_create_namespace(&user_ns);
 
     _invoke_clj_sym_as_fn(
         Box::new(Repl::new),
-        rc_env.clone(),
+        arc_env.clone(),
         sym!(@ns "user", "on-startup"),
         vec![],
     );
@@ -130,7 +129,7 @@ fn sys_toggle_unit_selection_on_timer(
     time: Res<Time>,
     mut timer: ResMut<ToggleUnitSelectionTimer>,
     mut query: Query<(Entity, &UnitComponent, &mut SelectableComponent)>,
-    rc_env: NonSend<Rc<Env>>,
+    arc_env: Res<Arc<Env>>,
 ) {
     if !timer.0.tick(time.delta()).just_finished() {
         return;
@@ -162,7 +161,7 @@ fn sys_toggle_unit_selection_on_timer(
 
         let should_toggle_selection = _invoke_clj_sym_as_fn(
             Box::new(Repl::new),
-            rc_env.clone(),
+            arc_env.clone(),
             sym!(@ns "user", "toggle-selection?"),
             args,
         );
@@ -187,13 +186,13 @@ fn _load_file(
 }
 
 fn _invoke_clj_sym_as_fn(
-    repl_provider: Box<dyn FnOnce(Rc<Env>) -> Repl>,
-    rc_env: Rc<Env>,
+    repl_provider: Box<dyn FnOnce(Arc<Env>) -> Repl>,
+    arc_env: Arc<Env>,
     fn_sym: Symbol,
     arg_vals: Vec<Value>,
 ) -> Value {
     let list_val = _as_clj_list_val(fn_sym, arg_vals);
-    let repl = repl_provider(rc_env);
+    let repl = repl_provider(arc_env);
     repl.eval(&list_val)
 }
 
@@ -218,15 +217,15 @@ fn _as_clj_list(
     list
 }
 
-pub(crate) fn create_custom_cljrs_env() -> Rc<Env> {
+pub(crate) fn create_custom_cljrs_env() -> Arc<Env> {
     let env = Env::new_main_environment();
-    let rc_env = Rc::new(env);
-    Env::populate_with_clojure_core(rc_env.clone());
+    let arc_env = Arc::new(env);
+    Env::populate_with_clojure_core(arc_env.clone());
 
 
     let custom_stuff_clj_ns_name = "bevy-cljrs";
     let custom_stuff_clj_ns_sym = cljrs::symbol::Symbol::intern(custom_stuff_clj_ns_name);
-    rc_env.change_or_create_namespace(&custom_stuff_clj_ns_sym);
+    arc_env.change_or_create_namespace(&custom_stuff_clj_ns_sym);
 
     #[derive(Debug, Clone)]
     pub struct HiFn {}
@@ -239,13 +238,13 @@ pub(crate) fn create_custom_cljrs_env() -> Rc<Env> {
     }
     let hi_fn = HiFn{}.to_rc_value();
 
-    rc_env.insert_into_namespace(
+    arc_env.insert_into_namespace(
         &custom_stuff_clj_ns_sym,
         cljrs::symbol::Symbol::intern("hi"),
         hi_fn,
     );
 
 
-    rc_env.change_or_create_namespace(&cljrs::symbol::Symbol::intern("user"));
-    rc_env
+    arc_env.change_or_create_namespace(&cljrs::symbol::Symbol::intern("user"));
+    arc_env
 }

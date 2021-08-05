@@ -10,5 +10,5 @@ rand = "0.8"
 [dependencies.cljrs]
 # path = "../cljrs"
 git = "https://github.com/phrohdoh/cljrs"
-branch = "main"
+branch = "wip/send-env-arc"
 package = "rust_clojure"
