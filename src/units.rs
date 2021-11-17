@@ -18,7 +18,7 @@ impl Plugin for UnitPlugin {
                t
             }))
            .add_startup_system(sys_startup.system())
-           .add_system(sys_set_unit_visibility_based_on_selection_status_on_timer.system())
+           //.add_system(sys_set_unit_visibility_based_on_selection_status_on_timer.system())
            ;
     }
 }
@@ -100,7 +100,7 @@ impl std::fmt::Display for UnitTypeId {
 }
 
 fn add_unit(
-    mut cmds: &mut Commands,
+    cmds: &mut Commands,
     unit: UnitComponent,
     selectable: SelectableComponent,
 ) {
