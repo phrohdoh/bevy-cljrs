@@ -1,8 +1,6 @@
 # prototype of a [Bevy] app with a [Clojure] scripting environment
 
-Clojure scripting environment provided by the [cljrs] project's _interpreter_.
-
-<small>_cljrs_ is a fork of [ClojureRS]</small>
+Clojure scripting environment provided by the [ClojureRS] project's _interpreter_.
 
 ---
 
@@ -30,6 +28,6 @@ play with changing `user/toggle-selection?` (see `some-user-script.clj`)
 
 [Bevy]: https://bevyengine.org
 [Clojure]: https://clojure.org
-[cljrs]: https://github.com/phrohdoh/cljrs
+[ClojureRS]: https://github.com/phrohdoh/ClojureRS
 [ClojureRS]: https://github.com/clojure-rs/ClojureRS
 [`cargo`]: https://doc.rust-lang.org/cargo

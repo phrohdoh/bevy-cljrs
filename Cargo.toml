@@ -8,7 +8,7 @@ bevy = { version = "0.5", features = ["dynamic"] }
 bevy_prototype_lyon = "0.3"
 rand = "0.8"
 [dependencies.cljrs]
-# path = "../cljrs"
-git = "https://github.com/phrohdoh/cljrs"
-branch = "main"
+path = "../clojurers"
+# git = "https://github.com/phrohdoh/ClojureRS"
+# branch = "main"
 package = "rust_clojure"
