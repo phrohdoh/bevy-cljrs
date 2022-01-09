@@ -10,7 +10,7 @@ bevy_prototype_lyon = "0.4"
 rand = "0.8"
 
 [dependencies.cljrs]
-path = "../clojurers"
-# git = "https://github.com/phrohdoh/ClojureRS"
-# branch = "main"
+#path = "../clojurers"
+git = "https://github.com/phrohdoh/ClojureRS"
+branch = "main"
 package = "rust_clojure"
