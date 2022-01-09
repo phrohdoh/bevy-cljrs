@@ -9,7 +9,7 @@ use bevy_prototype_lyon::prelude::*;
 
 pub struct UnitPlugin;
 impl Plugin for UnitPlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app.add_plugin(ShapePlugin);
         app
            .insert_resource(SetUnitVisTimer({
@@ -17,8 +17,8 @@ impl Plugin for UnitPlugin {
                t.pause();
                t
             }))
-           .add_startup_system(sys_startup.system())
-           //.add_system(sys_set_unit_visibility_based_on_selection_status_on_timer.system())
+           .add_startup_system(sys_startup)
+           //.add_system(sys_set_unit_visibility_based_on_selection_status_on_timer)
            ;
     }
 }
@@ -31,13 +31,13 @@ pub(crate) struct SetUnitVisTimer(pub Timer);
 // components //////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct UnitComponent {
     pub player_id: PlayerId,
     pub unit_type_id: UnitTypeId,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Component)]
 pub struct SelectableComponent {
     pub is_selected: bool,
 }
@@ -59,7 +59,7 @@ fn sys_startup(
 fn sys_set_unit_visibility_based_on_selection_status_on_timer(
     time: Res<Time>,
     mut timer: ResMut<SetUnitVisTimer>,
-    mut q: Query<(Entity, &SelectableComponent, &mut Visible), With<UnitComponent>>,
+    mut q: Query<(Entity, &SelectableComponent, &mut Visibility), With<UnitComponent>>,
 ) {
     let when = time.time_since_startup();
     let rs_dbg_curr_file = file!();
@@ -135,11 +135,16 @@ fn add_unit(
     };
 
     ent.insert_bundle(GeometryBuilder::build_as(
-        &shapes::Rectangle { width, height, origin },
-        ShapeColors::outlined(fill_color, stroke_color),
+        &shapes::Rectangle { extents: Vec2::new(width, height), origin },
         DrawMode::Outlined {
-            fill_options: FillOptions::default(),
-            outline_options: StrokeOptions::default().with_line_width(10.0),
+            fill_mode: FillMode {
+                options: FillOptions::default(),
+                color: fill_color,
+            },
+            outline_mode: StrokeMode {
+                options: StrokeOptions::default().with_line_width(10.0),
+                color: stroke_color,
+            }
         },
         Transform::default(),
     ));

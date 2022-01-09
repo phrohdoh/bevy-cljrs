@@ -41,20 +41,20 @@ macro_rules! sym {
 pub const STARTUP_SYSTEM_LABEL: &str = "scripting_startup";
 
 pub(crate) fn add_scripting(
-    app: &mut AppBuilder,
+    app: &mut App,
     env: Env,
     cfg: Configuration,
 ) {
     app.insert_non_send_resource(env)
        .insert_resource(cfg)
        .add_startup_system(
-           startup_bevy.system()
+           startup_bevy
             .label(STARTUP_SYSTEM_LABEL),
         )
        ;
     app.add_event::<Eval>()
        .add_event::<Evaled>()
-       .add_system(eval.system())
+       .add_system(eval)
        ;
 
     app.insert_resource(ToggleUnitSelectionTimer({
@@ -62,7 +62,7 @@ pub(crate) fn add_scripting(
             t.pause();
             t
         }))
-        .add_system(sys_toggle_unit_selection_on_timer.system())
+        .add_system(sys_toggle_unit_selection_on_timer)
         ;
 }
 

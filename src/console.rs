@@ -94,7 +94,8 @@ fn console_egui_window(
             ui.set_min_height(cfg.height);
             ui.set_min_width(cfg.width);
 
-            ScrollArea::from_max_height(scroll_height)
+            ScrollArea::both()
+                .max_height(scroll_height)
                 .show(ui, |ui| {
                     ui.vertical(|ui| {
                         ui.set_min_height(scroll_height);
@@ -265,23 +266,23 @@ pub const STARTUP_SYSTEM_LABEL: &str = "console_startup";
 
 pub struct ConsolePlugin;
 impl Plugin for ConsolePlugin {
-    fn build(&self, app: &mut AppBuilder) {
+    fn build(&self, app: &mut App) {
         app
             //.insert_non_send_resource(state_ref(State::default()))
             .add_event::<Input>()
             .add_event::<Display>()
             .add_event::<ClearDisplay>()
-            //.add_system(add_input_to_scrollback.system())
-            //.add_system(eval_input.system())
-            .add_system(eval_input_and_add_input_to_scrollback.system())
-            .add_system(mut_state_add_to_scrollback.system())
-            .add_system(mut_state_clear_scrollback.system())
+            //.add_system(add_input_to_scrollback)
+            //.add_system(eval_input)
+            .add_system(eval_input_and_add_input_to_scrollback)
+            .add_system(mut_state_add_to_scrollback)
+            .add_system(mut_state_clear_scrollback)
             .add_plugin(EguiPlugin)
-            .add_system(display_evaled.system())
+            .add_system(display_evaled)
             .add_system(console_egui_window.exclusive_system())
             //
             .add_startup_system(
-                startup_bevy.system()
+                startup_bevy
                     .label(STARTUP_SYSTEM_LABEL)
                     .after(scripting::STARTUP_SYSTEM_LABEL),
             )

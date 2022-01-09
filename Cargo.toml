@@ -1,12 +1,12 @@
 [package]
 name = "bevy_cljrs"
 version = "0.0.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-bevy = { version = "0.5", features = ["dynamic"] }
-bevy_egui = "0.5"
-bevy_prototype_lyon = "0.3"
+bevy = { version = "0.6", features = ["dynamic"] }
+bevy_egui = "0.10"
+bevy_prototype_lyon = "0.4"
 rand = "0.8"
 
 [dependencies.cljrs]

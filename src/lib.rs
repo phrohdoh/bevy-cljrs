@@ -9,10 +9,10 @@ use scripting::{
     create_custom_cljrs_env,
 };
 
-pub fn build_app() -> AppBuilder {
-    let mut app = App::build();
+pub fn build_app() -> App {
+    let mut app = App::new();
     app // normal bevy stuff
-       .add_system(exit_on_esc_system.system())
+       .add_system(exit_on_esc_system)
        .insert_resource(WindowDescriptor {
            title: "bevy + cljrs".into(),
            width: 1024.0,
